@@ -7,6 +7,8 @@ import com.ipiecoles.java.java230.model.Manager;
 import com.ipiecoles.java.java230.model.Technicien;
 import com.ipiecoles.java.java230.repository.EmployeRepository;
 import com.ipiecoles.java.java230.repository.ManagerRepository;
+import org.joda.time.LocalDate;
+import org.joda.time.format.DateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +30,15 @@ public class MyRunner implements CommandLineRunner {
     private static final String REGEX_MATRICULE = "^[MTC][0-9]{5}$";
     private static final String REGEX_NOM = ".*";
     private static final String REGEX_PRENOM = ".*";
+    private static final String REGEX_SALAIRE = "^[0-9]+\\.[0-9]{0,2}$";
+    //private static final String REGEX_SALAIRE = "^[0-9]+\\.[0-9]{0,2}$";
+    // Une REGEX est toujours une String.
+    // "^" sert à dire qu'on commence notre expression régulière
+    // "[0-9]" désigne tous les chiffres que l'on va pouvoir utiliser
+    // "+" veut dire que l'on veut au moins un chiffre
+    // "\\" est utilisé pour échapper un caractère (ici le point)
+    // {0,2} veut dire que l'on veut uniquement des chiffres compris entre 0 et 2 (bien séparer par une virgule)
+    // "$" sert à dire que c'est la fin de notre expression régulière
     private static final int NB_CHAMPS_MANAGER = 5;
     private static final int NB_CHAMPS_TECHNICIEN = 7;
     private static final String REGEX_MATRICULE_MANAGER = "^M[0-9]{5}$";
@@ -44,7 +55,7 @@ public class MyRunner implements CommandLineRunner {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
-    public void run(String... strings) throws Exception {
+    public void run(String... strings){
         String fileName = "employes.csv";
         readFile(fileName);
         //readFile(strings[0]);
@@ -112,10 +123,44 @@ public class MyRunner implements CommandLineRunner {
         //TODO
         String[] commercialFields = ligneCommercial.split(",");
         //Contrôle le matricule
-        commercialFields[0].matches(REGEX_MATRICULE);
 
-        Commercial c = new Commercial();
-        employes.add(c);
+        if (commercialFields.length != NB_CHAMPS_COMMERCIAL){ //Si la longueur du champs Commercial est différente
+            throw new BatchException("La longueur du champs commercial :" + commercialFields + " n'est pas bonne");
+        }
+
+        if (commercialFields[0].matches(REGEX_MATRICULE)){
+            throw new BatchException("Le matricule saisi ne répond pas aux conditions demandées");
+        }
+
+        if (commercialFields[1].matches(REGEX_NOM)){
+            throw new BatchException("Le nom saisi ne répond pas aux conditions demandées");
+        }
+
+        if (commercialFields[2].matches(REGEX_PRENOM)){
+            throw new BatchException("Le prénom saisi ne répond pas aux conditions demandées");
+        }
+
+        try{
+            LocalDate d = DateTimeFormat.forPattern("dd/MM/yyyy").parseLocalDate(commercialFields[3]);
+        }
+            catch (Exception e) {
+
+                throw new BatchException( commercialFields[3] + " ne respecte pas le format de date dd/MM/yyyy");
+            }
+
+        try{
+            float salaire = Float.parseFloat(commercialFields[4]);
+        }
+        catch (Exception e){
+
+            throw new BatchException(commercialFields[4] + " n'est pas un nombre valide pour un salaire");
+        }
+
+
+
+
+            Commercial c = new Commercial();
+            employes.add(c);
     }
 
     /**
